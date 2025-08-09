@@ -9,6 +9,16 @@ API_BASE_URL="https://pokeapi.co/api/v2/pokemon"
 ERROR_FILE="errors.txt"
 MAX_RETRIES=3
 
+# Function to handle script interruption
+cleanup() {
+    echo "🛑 Interrupt received. Cleaning up background jobs..."
+    jobs -p | xargs -r kill 2>/dev/null || true
+    exit 1
+}
+
+# Set up signal handlers
+trap cleanup SIGINT SIGTERM
+
 # Create output directory
 mkdir -p "$OUTPUT_DIR"
 
@@ -59,10 +69,22 @@ done
 
 echo "⏳ Waiting for all background processes to complete..."
 
+# Monitor jobs and wait for completion
+while [ $(jobs -r | wc -l) -gt 0 ]; do
+    echo "Active jobs: $(jobs -r | wc -l)"
+    sleep 1
+done
+
 # Wait for all background processes to finish
 for pid in "${pids[@]}"; do
     wait "$pid"
 done
+
+# Clean up any remaining jobs
+if [ $(jobs | wc -l) -gt 0 ]; then
+    echo "Cleaning up remaining jobs..."
+    jobs -p | xargs -r kill 2>/dev/null || true
+fi
 
 echo "✅ All parallel processes completed!"
 
