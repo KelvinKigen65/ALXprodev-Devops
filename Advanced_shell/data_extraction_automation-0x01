@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Data Extraction Automation - Task 1
+# Extracts Pokemon name, height, weight, and type from data.json
+
+DATA_FILE="data.json"
+
+if [ ! -f "$DATA_FILE" ]; then
+    echo "❌ Error: $DATA_FILE not found. Please run the API automation script first."
+    exit 1
+fi
+
+# Extract data using jq and format with awk/sed
+name=$(jq -r '.name' "$DATA_FILE" | sed 's/\b\w/\u&/g')
+height=$(jq -r '.height' "$DATA_FILE" | awk '{print $1/10}')
+weight=$(jq -r '.weight' "$DATA_FILE" | awk '{print $1/10}')
+type=$(jq -r '.types[0].type.name' "$DATA_FILE" | sed 's/\b\w/\u&/g')
+
+# Format and display output
+echo "$name is of type $type, weighs ${weight}kg, and is ${height}m tall."
